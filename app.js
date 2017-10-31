@@ -1,23 +1,28 @@
+const Benchmark = require("benchmark");
 const addon = require("bindings")("addon");
+const jsPrime = require("./isPrime");
 
 console.log(`native addon whoami: ${addon.WhoAmI()}`);
 
-for (let i = 0; i < 3; i++) {
-  console.log(`native addon increment: ${addon.Increment(i)}`);
+const number = 8250293;
+var suite = new Benchmark.Suite();
+
+suite
+  .add("JavaScript isPrime", function() {
+    jsPrime(number);
+  })
+  .add("C++ isPrime", function() {
+    addon.IsPrime(number);
+  })
+  .on("cycle", cycle)
+  .on("complete", complete)
+  .run({ async: true });
+
+function cycle(event) {
+  console.log(String(event.target));
 }
 
-const number = 654188429;
-const NATIVE = "c++";
-const JS = "js";
-
-console.time(NATIVE);
-console.log(
-  `${NATIVE}: checking whether ${number} is prime... ${addon.IsPrime(number)}`
-);
-console.timeEnd(NATIVE);
-console.log("");
-
-const isPrime = require("./isPrime");
-console.time(JS);
-console.log(`${JS}: checking whether ${number} is prime... ${isPrime(number)}`);
-console.timeEnd(JS);
+function complete(a, b) {
+  console.log("Fastest: " + this.filter("fastest").map("name"));
+  console.log("Slowest: " + this.filter("slowest").map("name"));
+}
